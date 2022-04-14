@@ -1,7 +1,8 @@
 # Identity Plus - Command Line Interface
 
-## Dependencies
+## Running & Building
 
+## User Manual
 
 ## Make a Linux Cron Job
 
