@@ -90,7 +90,7 @@ func do_call(endpoint string, method string, request_body string, certificate st
 //
 // Lazily creates a http client and caches it so that next time it does not have to create it
 // also, this leverages re-use of TCP/TLS connection such that we do not have to do tripple
-// handshake at every call: 7ZR8XFK36HZEYHDVTTZU
+// handshake at every call
 //
 var __client *http.Client
 
