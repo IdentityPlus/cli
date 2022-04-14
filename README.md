@@ -7,8 +7,8 @@
 ./identityplus [flags] command arguments
 
 ### Flags
-**-h** prints the help message
-**-v** enables verbose mode
+**-h** prints the help message  
+**-v** enables verbose mode  
 **-f identity/directory [HOMEDIR/.identityplus]**: specify the directory where the identity material will be stored  
 **-d device-name [\"Default Go Test\"]**: specify the device name to be used for this device  
 **-s api-service [identity.plus]**: specify an alternative path for Identity Plus API service  
