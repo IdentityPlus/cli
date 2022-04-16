@@ -2,6 +2,18 @@
 
 ## Running & Building
 
+The Identity Plus command line interface is built in GoLang. We recomment that you build the application for your own specific platform. To do so, please follow the stepts:
+
+1. Install the GoLang development platform  
+2. Check out this project from the repository  
+3. Open a terminal window and change direcory into the Identity Plus CLI directory you just checked out  
+4. Build the application:  
+   $ go mod init identityplus  
+   $ go build  
+5. You are done, the "identityplus" file in the current folder is your executable  
+6. You can also run the identityplus CLI without building it  
+   $ go run identityplus.go agents.go ...  
+   
 ## User Manual
 
 ./identityplus [flags] command arguments
@@ -15,7 +27,8 @@
 **-t trusted-CAs [SYSTEM TRUST STORE]**: specify Certificate Authority to trust. It will default to the authorities trusted by the OS  
 
 ### Operations
-enroll AUTHORIZATION-TOKEN
+
+#### enroll AUTHORIZATION-TOKEN
 Enroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://signon.identity.plus
 
 #### employ AUTHORIZATION-TOKEN
