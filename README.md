@@ -1,9 +1,22 @@
 # Identity Plus - Command Line Interface
 
-The Indentity Plus CLI is a simple, command line tool for all identity plus basic functions. While these functions are available as API and can be perfomed from within applications, the CLI can come in handy to automate deployments and maintenance from an automation suite.
+The Indentity Plus CLI is a simple, command line tool for all identity plus basic functions. While these functions are available as API and can be perfomed from within applications, the CLI can come in handy to automate deployments and maintenance using an automation suite.
 
-### Definitions
+### Definitions 
 
+Identity Plus is a device identity suite built upon the TLS communication stack. In this documentation we will assume you are already familiar with the following technologies and concepts:
+
+#### TLS
+
+Transport Layer Security, the successor of SSL, is a communication layer built upon the TCP stack to ensure confientiality of the communication and the identity of one or both the communicating parties. The term is also used denote the simple form of TLS communication, when only one of the parties presents identity information, the minimum necessary for TLS to work.
+
+#### MATLS
+
+Mutually Authenticated TLS, is the full version of TLS, when both parties present identity information
+
+#### X.509 Certificate
+
+Colloquially known as a TLS Certificate or SSL Certificate, the X.509 Certificate is a Criptographic instrument that gives a computer software the ability to prove identity by means of a private key. The public part of the certificate, contains identity information, verifying (public) key and various other information. Structurally all X.509 Certificates are the same, they only difer in their purpose which is documented in the cerificate: authority (certificates that sign other certificates), sever (certificates that prove server identity), client certificates (certificates that prove client identity)
 
 ## Running & Building
 
