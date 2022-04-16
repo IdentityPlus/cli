@@ -1,5 +1,10 @@
 # Identity Plus - Command Line Interface
 
+The Indentity Plus CLI is a simple, command line tool for all identity plus basic functions. While these functions are available as API and can be perfomed from within applications, the CLI can come in handy to automate deployments and maintenance from an automation suite.
+
+### Definitions
+
+
 ## Running & Building
 
 The Identity Plus command line interface is built in GoLang. We recomment that you build the application for your own specific platform. To do so, please follow the stepts:
