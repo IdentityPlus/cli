@@ -18,29 +18,68 @@ import (
 	//	"strconv"
 )
 
-func enroll_user_agent(authorization string, device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"qrc_unlock\", \"args\": {\"code\": \""+authorization+"\"}}", "", "")
+func interactive_enroll_user_agent(device_name string, identity_dir string) string {
+	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"request_oob_unlock\", \"args\": {}}", "", "")
 
 	if err != "" {
-		return "Login failed: " + err
+		return "Failed requesting login intent: " + err
 	}
 
 	if verbose {
 		fmt.Printf(string(ans))
 	}
 
-	var response Auth_Response
+	var response Intent_Response
 	json.Unmarshal(ans, &response)
 
-	if response.Error != "" {
-		return "Login failed: " + response.Error
+	qr_code := response.Result.QR
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Print("      ")
+	for i := 0; i < len(qr_code); i++ {
+		if qr_code[i] == '1' {
+			fmt.Printf("\u2588\u2588")
+
+		} else if qr_code[i] == '0' {
+			fmt.Printf("  ")
+
+		} else {
+			fmt.Println(" ")
+			fmt.Print("      ")
+		}
+	}
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("Please scan the above QR Code with your Identity Plus App.")
+	fmt.Print("Waiting ...")
+
+	for i := 0; i < 10; i++ {
+		err, ans = do_post("https://sso."+service+"/api/v1", "{\"operation\": \"oob_unlock\", \"args\": {\"token\": \""+response.Result.Token+"\", \"intent\": \""+response.Result.Intent+"\", \"keep-alive\":10}}}", "", "")
+
+		if err != "" {
+			return string(err)
+		}
+
+		var response Auth_Response
+		json.Unmarshal(ans, &response)
+
+		if (response.Error != "" || response.Result.Outcome != "logged in") && verbose {
+			fmt.Println(response.Error + ", trying again")
+		} else {
+			fmt.Printf(".")
+		}
+
+		if response.Result.Outcome == "logged in" {
+			return "\n" + do_enroll(response.Result.Token) + "\n"
+		}
+
 	}
 
-	if response.Result.Outcome != "logged in" {
-		return "Login failed: " + response.Result.Outcome
-	}
+	return "Login timed out"
+}
 
-	err, ans = do_post("https://sso."+service+"/api/v1", "{\"operation\": \"issue_certificate\", \"args\": {\"token\": \""+response.Result.Token+"\", \"device\": \""+device_name+"\", \"protect\":true}}", "", "")
+func do_enroll(token string) string {
+	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"issue_certificate\", \"args\": {\"token\": \""+token+"\", \"device\": \""+device_name+"\", \"protect\":true}}", "", "")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -76,6 +115,31 @@ func enroll_user_agent(authorization string, device_name string, identity_dir st
 	ioutil.WriteFile(identity_dir+"/"+device_name+".key", pem_key, 0644)
 
 	return "success"
+}
+
+func enroll_user_agent(authorization string, device_name string, identity_dir string) string {
+	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"qrc_unlock\", \"args\": {\"code\": \""+authorization+"\"}}", "", "")
+
+	if err != "" {
+		return "Login failed: " + err
+	}
+
+	if verbose {
+		fmt.Printf(string(ans))
+	}
+
+	var response Auth_Response
+	json.Unmarshal(ans, &response)
+
+	if response.Error != "" {
+		return "Login failed: " + response.Error
+	}
+
+	if response.Result.Outcome != "logged in" {
+		return "Login failed: " + response.Result.Outcome
+	}
+
+	return do_enroll(response.Result.Token)
 }
 
 func employ_service_agent(authorization string, device_name string, identity_dir string) string {
@@ -263,6 +327,17 @@ type SSO_Result struct {
 type Auth_Response struct {
 	Error  string     `json:"error"`
 	Result SSO_Result `json:"result"`
+}
+
+type Intent struct {
+	Token  string `json:"token"`
+	Intent string `json:"intent"`
+	QR     string `json:"intent-qr"`
+}
+
+type Intent_Response struct {
+	Error  string `json:"error"`
+	Result Intent `json:"result"`
 }
 
 type X509_Identity_Response struct {

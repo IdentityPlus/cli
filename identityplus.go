@@ -57,7 +57,7 @@ func do_call(endpoint string, method string, request_body string, certificate st
 	}
 
 	if verbose {
-		fmt.Println(request_body)
+		// fmt.Println(request_body)
 	}
 
 	// var body_reader io.Reader
@@ -135,7 +135,7 @@ func client(certificate string, key string) (*http.Client, error) {
 
 		__client = &http.Client{
 			Transport: &transport,
-			Timeout:   time.Second * 30,
+			Timeout:   time.Second * 40,
 		}
 	}
 
@@ -220,7 +220,7 @@ func main() {
 			command = os.Args[i]
 
 			if len(os.Args) <= i+1 {
-				fmt.Println("Usage: identityplus [ flags ] enroll authorization-token")
+				fmt.Println("Authorization missing, switching to interactive mode")
 			} else {
 				authorization = os.Args[i+1]
 				i = i + 1
@@ -291,7 +291,14 @@ func main() {
 	}
 
 	if command == "enroll" {
-		ans := enroll_user_agent(authorization, device_name, identity_dir)
+		var ans = ""
+
+		if authorization == "" {
+			ans = interactive_enroll_user_agent(device_name, identity_dir)
+		} else {
+			ans = enroll_user_agent(authorization, device_name, identity_dir)
+		}
+
 		fmt.Print(ans)
 		log.Println(ans)
 	}
