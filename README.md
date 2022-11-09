@@ -75,6 +75,21 @@ Renewes the server certificate for the service if necessary (reached 3/4 of its 
 #### list-devices
 Lists all devices you own)
 
-## Make a Linux Cron Job
+## Certificate Continuity
+One of the biggest problems in certificate distribution and management is certificate expiry. Expired certificates can not be used to establish TLS connection and thus can cause server outages similarly as a network outages do. Identity Plus makes it simple to not run into this problem as the certificates are managed by the owners not by the issures. A simple client side automation using the Identity Plus command line tool will ensure continuity, in a set-and-forget manner, so you no longer have to worry about certificate expiry and the resulting communication outages.
 
+There are potentially two automations required, depending on the nature of the deployment on the device in scope: client automation if the device is client only and both client and service automation if the device is running a service or a service gateway using Identity Plus issued server server certificates. If the server component is not running on Identity Plus issued server certificates, then the sever certificate conitnuity needs to be addressed separately, as it is neither dependant on, or in control of Identity Plus.
 
+### Agent Continuity
+After provisioning the agent (client) certificate either by using enroll (provision a personal certificate for a personal computer) or using (employ) to provision a service agent for a service worker, run the agent-update.sh shell script using the inputs (agent directory and agent name) you provided during provision:
+
+        $ ./agent-update.sh /agent/directory AgentName
+
+The certificate will be verified for validity and if approching expiry (75% of its lifetime) it will be automatically renewed. The command will also auto-provision a cron job, which will run the command itself, so that going forward the agent-update will be executed every day at 4AM in the morning.
+
+### Service Continuity
+Should your service run using an Identity Plus server certificate, the renewal of the certificate is done similarly, by running the command
+
+        $ ./agent-update.sh /agent/directory AgentName
+
+The agent renewal script also takes care of reloading nginx should the certificate be renewed. Load balancer restart is not necessary. Similarly to the agent update script, the service update script will also auto provision a cron job which will run the script on its own going forward so that you never don't have to manually manage this. This way you will not suffer certificate expiry related outages. This is particularly important for large service to service (micro-services for example) evironments, where you could potentially have hundreds of services, with thousands of interconnections among them.
