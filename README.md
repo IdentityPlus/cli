@@ -44,7 +44,10 @@ The Identity Plus command line interface is built in GoLang. We recomment that y
 **-h** prints the help message  
 **-v** enables verbose mode  
 **-f identity/directory [HOMEDIR/.identityplus]**: specify the directory where the identity material will be stored  
-**-d device-name [\"Default Go Test\"]**: specify the device name to be used for this device  
+**-d device-name [\"Default Go Test\"]**: specify the device name to be used for this device
+
+### Debug Flags
+These flags are only need to be specified in case of debugging, otherwise they should stay default
 **-s api-service [identity.plus]**: specify an alternative path for Identity Plus API service  
 **-t trusted-CAs [SYSTEM TRUST STORE]**: specify Certificate Authority to trust. It will default to the authorities trusted by the OS  
 
