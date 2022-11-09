@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	// "strings"
 
@@ -19,7 +20,7 @@ import (
 )
 
 func interactive_enroll_user_agent(device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"request_oob_unlock\", \"args\": {}}", "", "")
+	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"request_oob_unlock\", \"args\": {\"no-redundancy\":false}}", "", "")
 
 	if err != "" {
 		return "Failed requesting login intent: " + err
@@ -32,21 +33,26 @@ func interactive_enroll_user_agent(device_name string, identity_dir string) stri
 	var response Intent_Response
 	json.Unmarshal(ans, &response)
 
-	qr_code := response.Result.QR
+	qr_code := strings.Split(response.Result.QR, ";")
 	fmt.Println("")
 	fmt.Println("")
 	fmt.Print("      ")
-	for i := 0; i < len(qr_code); i++ {
-		if qr_code[i] == '1' {
-			fmt.Printf("\u2588\u2588")
+	for i := 0; i < len(qr_code); i += 2 {
+		for j := 0; j < len(qr_code[i]); j++ {
 
-		} else if qr_code[i] == '0' {
-			fmt.Printf("  ")
-
-		} else {
-			fmt.Println(" ")
-			fmt.Print("      ")
+			if qr_code[i][j] == '1' && (i > len(qr_code)-3 || qr_code[i+1][j] == '0') {
+				fmt.Printf("\u2580") // upper half block
+			} else if qr_code[i][j] == '1' && i < len(qr_code)-2 && qr_code[i+1][j] == '1' {
+				fmt.Printf("\u2588") // full block
+			} else if qr_code[i][j] == '0' && i < len(qr_code)-2 && qr_code[i+1][j] == '1' {
+				fmt.Printf("\u2584") // lower half block
+			} else {
+				fmt.Printf(" ")
+			}
 		}
+
+		fmt.Println("")
+		fmt.Print("      ")
 	}
 	fmt.Println("")
 	fmt.Println("")
@@ -183,8 +189,8 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 	return "success"
 }
 
-func renew(device_name string, identity_dir string, force bool) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"renew_certificate\", \"args\": {\"device\": \""+device_name+"\", \"protect\":true, \"force-renew\":"+strconv.FormatBool(force)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+func renew(device_name string, identity_dir string, tentative bool) string {
+	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"renew_certificate\", \"args\": {\"device\": \""+device_name+"\", \"protect\":true, \"tentative\":"+strconv.FormatBool(tentative)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -291,7 +297,7 @@ func call(url string, device_name string, identity_dir string) string {
 }
 
 // func service_identity_renewal(must_renew bool) IDP_Response {
-// 	ans := do_put("https://api.identity.plus/v1", "{\"Service-Identity-Request\":{\"force-renewal\": "+strconv.FormatBool(must_renew)+"}}")
+// 	ans := do_put("https://api.identity.plus/v1", "{\"Service-Identity-Request\":{\"tentative\": "+strconv.FormatBool(must_renew)+"}}")
 // 	return ans
 
 // }

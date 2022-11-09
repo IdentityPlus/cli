@@ -310,7 +310,7 @@ func main() {
 	}
 
 	if command == "renew" {
-		ans := renew(device_name, identity_dir, true)
+		ans := renew(device_name, identity_dir, false)
 		fmt.Print(ans)
 		log.Println(ans)
 	}
@@ -323,7 +323,7 @@ func main() {
 	}
 
 	if command == "update" {
-		ans := renew(device_name, identity_dir, false)
+		ans := renew(device_name, identity_dir, true)
 		fmt.Print(ans)
 		log.Println(ans)
 	}
