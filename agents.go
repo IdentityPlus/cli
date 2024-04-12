@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -20,7 +22,7 @@ import (
 )
 
 func interactive_enroll_user_agent(device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"request_oob_unlock\", \"args\": {\"no-redundancy\":false}}", "", "")
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"request_oob_unlock\", \"args\": {\"no-redundancy\":false}}", "", "")
 
 	if err != "" {
 		return "Failed requesting login intent: " + err
@@ -60,7 +62,7 @@ func interactive_enroll_user_agent(device_name string, identity_dir string) stri
 	fmt.Print("Waiting ...")
 
 	for i := 0; i < 10; i++ {
-		err, ans = do_post("https://sso."+service+"/api/v1", "{\"operation\": \"oob_unlock\", \"args\": {\"token\": \""+response.Result.Token+"\", \"intent\": \""+response.Result.Intent+"\", \"keep-alive\":10}}}", "", "")
+		err, ans = do_post("https://signon."+service+"/api/v1", "{\"operation\": \"oob_unlock\", \"args\": {\"token\": \""+response.Result.Token+"\", \"intent\": \""+response.Result.Intent+"\", \"keep-alive\":10}}}", "", "")
 
 		if err != "" {
 			return string(err)
@@ -76,7 +78,7 @@ func interactive_enroll_user_agent(device_name string, identity_dir string) stri
 		}
 
 		if response.Result.Outcome == "logged in" {
-			return "\n" + do_enroll(response.Result.Token) + "\n"
+			return "\n" + do_enroll(response.Result.Token, device_name) + "\n"
 		}
 
 	}
@@ -84,8 +86,8 @@ func interactive_enroll_user_agent(device_name string, identity_dir string) stri
 	return "Login timed out"
 }
 
-func do_enroll(token string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"issue_certificate\", \"args\": {\"token\": \""+token+"\", \"device\": \""+device_name+"\", \"protect\":true}}", "", "")
+func do_enroll(token string, device_name string) string {
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"issue_certificate\", \"args\": {\"token\": \""+token+"\", \"device\": \""+device_name+"\", \"protect\":true}}", "", "")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -124,7 +126,7 @@ func do_enroll(token string) string {
 }
 
 func enroll_user_agent(authorization string, device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"qrc_unlock\", \"args\": {\"code\": \""+authorization+"\"}}", "", "")
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"qrc_unlock\", \"args\": {\"code\": \""+authorization+"\"}}", "", "")
 
 	if err != "" {
 		return "Login failed: " + err
@@ -145,11 +147,12 @@ func enroll_user_agent(authorization string, device_name string, identity_dir st
 		return "Login failed: " + response.Result.Outcome
 	}
 
-	return do_enroll(response.Result.Token)
+	return do_enroll(response.Result.Token, device_name)
 }
 
 func employ_service_agent(authorization string, device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"issue_service_agent_identity\", \"args\": {\"authorization\": \""+authorization+"\", \"agent-name\": \""+device_name+"\", \"protect\":true}}", "", "")
+
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"issue_service_agent_identity\", \"args\": {\"authorization\": \""+authorization+"\", \"agent-name\": \""+device_name+"\", \"protect\":true}}", "", "")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -158,7 +161,9 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 	var agent_identity X509_Identity_Response
 	json.Unmarshal(ans, &agent_identity)
 
-	fmt.Printf(string(ans))
+	if verbose {
+		fmt.Printf(string(ans))
+	}
 
 	if agent_identity.Error != "" {
 		return "Failed issuing certificate: " + agent_identity.Error
@@ -167,6 +172,11 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 	p12_cert, derr := base64.StdEncoding.DecodeString(agent_identity.Result.P12)
 	if derr != nil {
 		return "Faild decoding certificate: " + err
+	}
+
+	path := identity_dir
+	if os.MkdirAll(path, os.ModePerm) != nil {
+		log.Println(err)
 	}
 
 	ioutil.WriteFile(identity_dir+"/"+device_name+".p12", p12_cert, 0644)
@@ -190,7 +200,8 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 }
 
 func renew(device_name string, identity_dir string, tentative bool) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"renew_certificate\", \"args\": {\"device\": \""+device_name+"\", \"protect\":true, \"tentative\":"+strconv.FormatBool(tentative)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"renew_certificate\", \"args\": {\"device\": \""+device_name+"\", \"protect\":true, \"tentative\":"+strconv.FormatBool(tentative)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -232,7 +243,7 @@ func renew(device_name string, identity_dir string, tentative bool) string {
 }
 
 func issue_service_identity(device_name string, identity_dir string, force bool) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"issue_service_certificate\", \"args\": {\"force-renew\":"+strconv.FormatBool(force)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"issue_service_certificate\", \"args\": {\"force-renew\":"+strconv.FormatBool(force)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -252,29 +263,34 @@ func issue_service_identity(device_name string, identity_dir string, force bool)
 			return "Faild decoding certificate: " + err
 		}
 
-		ioutil.WriteFile(identity_dir+"/service/"+service_identity.Result.Name+".p12", p12_cert, 0644)
-		ioutil.WriteFile(identity_dir+"/service/"+service_identity.Result.Name+".password", []byte(service_identity.Result.Password), 0644)
+		path := identity_dir + "/service-id/"
+		if os.MkdirAll(path, os.ModePerm) != nil {
+			log.Println(err)
+		}
+
+		ioutil.WriteFile(identity_dir+"/service-id/"+service_identity.Result.Name+".p12", p12_cert, 0644)
+		ioutil.WriteFile(identity_dir+"/service-id/"+service_identity.Result.Name+".password", []byte(service_identity.Result.Password), 0644)
 
 		pem_cert, derr := base64.StdEncoding.DecodeString(service_identity.Result.Certificate)
 		if derr != nil {
 			return "Faild decoding certificate: " + err
 		}
 
-		ioutil.WriteFile(identity_dir+"/service/"+service_identity.Result.Name+".cer", pem_cert, 0644)
+		ioutil.WriteFile(identity_dir+"/service-id/"+service_identity.Result.Name+".cer", pem_cert, 0644)
 
 		pem_key, derr := base64.StdEncoding.DecodeString(service_identity.Result.PrivateKey)
 		if derr != nil {
 			return "Faild decoding certificate: " + err
 		}
 
-		ioutil.WriteFile(identity_dir+"/service/"+service_identity.Result.Name+".key", pem_key, 0644)
+		ioutil.WriteFile(identity_dir+"/service-id/"+service_identity.Result.Name+".key", pem_key, 0644)
 	}
 
 	return service_identity.Result.Outcome
 }
 
 func list_devices(device_name string, identity_dir string) string {
-	err, ans := do_post("https://sso."+service+"/api/v1", "{\"operation\": \"get_active_identities\", \"args\": {}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"get_active_identities\", \"args\": {}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
 	if err != "" {
 		return "Faild issuing certificate: " + err
@@ -325,14 +341,14 @@ type X509_Identity struct {
 	Outcome     string `json:"outcome"`
 }
 
-type SSO_Result struct {
+type signon_Result struct {
 	Token   string `json:"token"`
 	Outcome string `json:"outcome"`
 }
 
 type Auth_Response struct {
-	Error  string     `json:"error"`
-	Result SSO_Result `json:"result"`
+	Error  string        `json:"error"`
+	Result signon_Result `json:"result"`
 }
 
 type Intent struct {
