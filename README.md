@@ -54,11 +54,8 @@ These flags are only need to be specified in case of debugging, otherwise they s
 
 ### Operations
 
-#### enroll AUTHORIZATION-TOKEN
-Enroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://signon.identity.plus
-
-#### employ AUTHORIZATION-TOKEN
-Employ current device as an agent to one of your services. Requires an authorization token that can be obtained from https://my.identity.plus/ORG/service/SERVICE-ID/agents
+#### enroll AUTHORIZATION-TOKEN. 
+Enroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://my.identity.plus/devices. If the self autoprovisinong token is obtained at https://platform.identity.plus/organization/xyz.../service/qpr.../agents, the identity will be issued as an agent of the named service. You must have rights to issue agents to the service for this to succeede.
 
 #### renew
 Renewes the current identity (user device or service agent)
