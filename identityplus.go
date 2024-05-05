@@ -177,13 +177,12 @@ func main() {
 			fmt.Println("-s api-service [identity.plus]: specify an alternative path for Identity Plus API service")
 			fmt.Println("-t trusted-CAs [SYSTEM TRUST STORE]: specify Certificate Authority to trust. It will default to the authorities trusted by the OS")
 			fmt.Println("\n\n-- commands --\n")
-			fmt.Println("enroll-user-device AUTHORIZATION-TOKEN: Enroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://my.identity.plus")
-			fmt.Println("enroll-service-device: AUTHORIZATION-TOKEN: Employ current device as an agent to one of your services. Requires an authorization token that can be obtained from https://platform.identity.plus/ORG/service/SERVICE-ID/agents")
-			fmt.Println("renew-agent: Renewes the current identity (user device or service agent)")
-			fmt.Println("update-agent: Renewes the current identity (user device or service agent) if approaching expiration (3/4 of lifetime)")
-			fmt.Println("issue-service-identity: Generates a server certificate for your service, signed by the Idnetity Plus CA. The call must be made with a valid agent enrolled by the service. To work with Identity Plus issued server certificates we recommend explicitly trusting the Identity Plus Root CA")
-			fmt.Println("update-service: renewes the server certificate for the service if necessary (reached 3/4 of its lifetime or the domain name has changed). The call must be made with a valid agent employed by the service.")
-			fmt.Println("list-agents: Lists all devices you own)")
+			fmt.Println("enroll AUTHORIZATION-TOKEN:\nEnroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://my.identity.plus. If the authorization token is issued as part of a service agent in https://platform.identity.plus/organization/xyz.../service/qpr.../agents the identity will be issued as a service agent. You must have the correct role in the service to issue service agent identities.\n")
+			fmt.Println("renew:\nRenewes the current identity (user device or service agent)\n")
+			fmt.Println("update:\nRenewes the current identity (user device or service agent) if approaching expiration (3/4 of lifetime)\n")
+			fmt.Println("issue-service-identity:\nGenerates a server certificate for your service, signed by the Idnetity Plus CA. The call must be made with a valid agent enrolled by the service. To work with Identity Plus issued server certificates we recommend explicitly trusting the Identity Plus Root CA\n")
+			fmt.Println("update-service:\nrenewes the server certificate for the service if necessary (reached 3/4 of its lifetime or the domain name has changed). The call must be made with a valid agent employed by the service.\n")
+			fmt.Println("list-agents:\nLists all devices you own)\n")
 			fmt.Println("\n---\n\n")
 
 			return
@@ -228,7 +227,7 @@ func main() {
 			command = os.Args[i]
 
 			if len(os.Args) <= i+1 {
-				fmt.Println("Authorization missing, switching to interactive mode")
+				fmt.Println("Usage: identityplus [ flags ] enroll-user-device auto-provisioning-token")
 			} else {
 				authorization = os.Args[i+1]
 				i = i + 1
@@ -238,7 +237,17 @@ func main() {
 			command = os.Args[i]
 
 			if len(os.Args) <= i+1 {
-				fmt.Println("Usage: identityplus [ flags ] employ auto-provisioning-token")
+				fmt.Println("Usage: identityplus [ flags ] enroll-service-device auto-provisioning-token")
+			} else {
+				authorization = os.Args[i+1]
+				i = i + 1
+			}
+
+		} else if os.Args[i] == "enroll" {
+			command = os.Args[i]
+
+			if len(os.Args) <= i+1 {
+				fmt.Println("Usage: identityplus [ flags ] enroll auto-provisioning-token")
 			} else {
 				authorization = os.Args[i+1]
 				i = i + 1
@@ -304,7 +313,20 @@ func main() {
 		if authorization == "" {
 			ans = interactive_enroll_user_agent(device_name, identity_dir)
 		} else {
-			ans = enroll_user_agent(authorization, device_name, identity_dir)
+			ans = enroll_unified(authorization, device_name, identity_dir)
+		}
+
+		fmt.Print(ans)
+		log.Println(ans)
+	}
+
+	if command == "enroll" {
+		var ans = ""
+
+		if authorization == "" {
+			ans = interactive_enroll_user_agent(device_name, identity_dir)
+		} else {
+			ans = enroll_unified(authorization, device_name, identity_dir)
 		}
 
 		fmt.Print(ans)
@@ -312,7 +334,7 @@ func main() {
 	}
 
 	if command == "enroll-service-device" {
-		ans := employ_service_agent(authorization, device_name, identity_dir)
+		ans := enroll_unified(authorization, device_name, identity_dir)
 		fmt.Print(ans)
 		log.Println(ans)
 	}

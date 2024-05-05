@@ -199,6 +199,55 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 	return "success"
 }
 
+func enroll_unified(authorization string, device_name string, identity_dir string) string {
+
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"enroll\", \"args\": {\"authorization\": \""+authorization+"\", \"agent-name\": \""+device_name+"\", \"protect\":true}}", "", "")
+
+	if err != "" {
+		return "Faild issuing certificate: " + err
+	}
+
+	var agent_identity X509_Identity_Response
+	json.Unmarshal(ans, &agent_identity)
+
+	if verbose {
+		fmt.Printf(string(ans))
+	}
+
+	if agent_identity.Error != "" {
+		return "Failed issuing certificate: " + agent_identity.Error
+	}
+
+	p12_cert, derr := base64.StdEncoding.DecodeString(agent_identity.Result.P12)
+	if derr != nil {
+		return "Faild decoding certificate: " + err
+	}
+
+	path := identity_dir
+	if os.MkdirAll(path, os.ModePerm) != nil {
+		log.Println(err)
+	}
+
+	ioutil.WriteFile(identity_dir+"/"+device_name+".p12", p12_cert, 0644)
+	ioutil.WriteFile(identity_dir+"/"+device_name+".password", []byte(agent_identity.Result.Password), 0644)
+
+	pem_cert, derr := base64.StdEncoding.DecodeString(agent_identity.Result.Certificate)
+	if derr != nil {
+		return "Faild decoding certificate: " + err
+	}
+
+	ioutil.WriteFile(identity_dir+"/"+device_name+".cer", pem_cert, 0644)
+
+	pem_key, derr := base64.StdEncoding.DecodeString(agent_identity.Result.PrivateKey)
+	if derr != nil {
+		return "Faild decoding certificate: " + err
+	}
+
+	ioutil.WriteFile(identity_dir+"/"+device_name+".key", pem_key, 0644)
+
+	return "success"
+}
+
 func renew(device_name string, identity_dir string, tentative bool) string {
 
 	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"renew_certificate\", \"args\": {\"device\": \""+device_name+"\", \"protect\":true, \"tentative\":"+strconv.FormatBool(tentative)+"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
