@@ -72,6 +72,11 @@ Renewes the server certificate for the service if necessary (reached 3/4 of its 
 #### list-devices
 Lists all devices you own)
 
+#### assist-enroll managed-service.org.mtls.app
+Generates an autoprovisioning token for the manged service. The managed service can use the resulting token within 5 minutes to perform an enroll operation.
+The mTLS ID this operation is executed with must belong to an entity (person or service) that has management role (manager or administrator) in the managed-service.org.mtls.app service.
+This has to be configured in the https://platform.identity.plus/organization/org-id/service/service-id/access-management/[services | people]
+
 ## Certificate Continuity
 One of the biggest problems in certificate distribution and management is certificate expiry. Expired certificates can not be used to establish TLS connection and thus can cause server outages similarly as a network outages do. Identity Plus makes it simple to not run into this problem as the certificates are managed by the owners not by the issures. A simple client side automation using the Identity Plus command line tool will ensure continuity, in a set-and-forget manner, so you no longer have to worry about certificate expiry and the resulting communication outages.
 
