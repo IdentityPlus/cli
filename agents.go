@@ -199,6 +199,23 @@ func employ_service_agent(authorization string, device_name string, identity_dir
 	return "success"
 }
 
+func assist_enroll(managed_service string, device_name string, identity_dir string) string {
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"assist\", \"args\": {\"managed-service\": \""+managed_service+"\"}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+
+	if err != "" {
+		return "Faild generating autoprovisioning token: " + err
+	}
+
+	var response Autoprovisioning_Token_Response
+	json.Unmarshal(ans, &response)
+
+	if response.Error != "" {
+		return "Faild generating autoprovisioning token: " + response.Error
+	}
+
+	return response.Result.Token
+}
+
 func enroll_unified(authorization string, device_name string, identity_dir string) string {
 
 	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"enroll\", \"args\": {\"authorization\": \""+authorization+"\", \"agent-name\": \""+device_name+"\", \"protect\":true}}", "", "")
@@ -415,3 +432,14 @@ type X509_Identity_Response struct {
 	Error  string        `json:"error"`
 	Result X509_Identity `json:"result"`
 }
+
+type Autoprovisioning_Token_Response struct {
+	Error  string        		  `json:"error"`
+	Result Autoprovisioning_Token `json:"result"`
+}
+
+type Autoprovisioning_Token struct {
+	Managed_Service  string     `json:"managed-service"`
+	Token            string 	`json:"token"`
+}
+

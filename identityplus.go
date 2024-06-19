@@ -17,6 +17,7 @@ var verbose = false
 var command = "get url"
 var service = "identity.plus"
 var authorization = ""
+var managed_service = ""
 var identity_dir = "."
 var trust_store = ""
 var url = ""
@@ -253,6 +254,16 @@ func main() {
 				i = i + 1
 			}
 
+		} else if os.Args[i] == "assist-enroll" {
+			command = os.Args[i]
+
+			if len(os.Args) <= i+1 {
+				fmt.Println("Usage: identityplus [ flags ] assist-enroll service")
+			} else {
+				managed_service = os.Args[i+1]
+				i = i + 1
+			}
+
 		} else if os.Args[i] == "renew" {
 			command = os.Args[i]
 
@@ -331,6 +342,12 @@ func main() {
 
 		fmt.Print(ans)
 		log.Println(ans)
+	}
+
+	if command == "assist-enroll" {
+		ans := assist_enroll(managed_service, device_name, identity_dir)
+		fmt.Print(ans)
+		log.Println("Assisting " + managed_service + " with autoprovisioning...")
 	}
 
 	if command == "enroll-service-device" {
