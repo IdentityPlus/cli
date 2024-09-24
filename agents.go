@@ -362,7 +362,7 @@ func get_trust_chain(device_name string, identity_dir string) string {
 		return "unable to download trust chain: " + err
 	}
 
-	ioutil.WriteFile(identity_dir+"/service-id/identity-plus-root-ca.pem", ans, 0644)
+	ioutil.WriteFile(identity_dir+"/service-id/identity-plus-root-ca.cer", ans, 0644)
 	
 	return "trust chain saved: " + identity_dir+"/service-id/identity-plus-root-ca.cer" 
 }
