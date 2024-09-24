@@ -9,3 +9,13 @@ fi
 echo -n "updating agent mTLS ID on device... "
 RESULT_A=$( /opt/identity.plus/cli/identityplus -f "$1" -d "$2" update )
 echo $RESULT_A
+
+if [[ $RESULT_S == "renewed" ]]
+    then
+	    echo "reloading mtls-persona ... "
+        kill $(pidof mtls-persona)
+	    echo "done."
+    else
+	    echo "nothing to do ..."
+    fi
+
