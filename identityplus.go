@@ -179,11 +179,13 @@ func main() {
 			fmt.Println("-t trusted-CAs [SYSTEM TRUST STORE]: specify Certificate Authority to trust. It will default to the authorities trusted by the OS")
 			fmt.Println("\n\n-- commands --\n")
 			fmt.Println("enroll AUTHORIZATION-TOKEN:\nEnroll current device as one of your end user devices. Requires an authorization token that can be obtained from https://my.identity.plus. If the authorization token is issued as part of a service agent in https://platform.identity.plus/organization/xyz.../service/qpr.../agents the identity will be issued as a service agent. You must have the correct role in the service to issue service agent identities.\n")
+			fmt.Println("assist-enroll:\nIssues an autoprovisioning token for a service to help kickstart its provisioning. The requesting identity must be a manager or administrator of the assisted services)\n")
 			fmt.Println("renew:\nRenewes the current identity (user device or service agent)\n")
 			fmt.Println("update:\nRenewes the current identity (user device or service agent) if approaching expiration (3/4 of lifetime)\n")
 			fmt.Println("issue-service-identity:\nGenerates a server certificate for your service, signed by the Idnetity Plus CA. The call must be made with a valid agent enrolled by the service. To work with Identity Plus issued server certificates we recommend explicitly trusting the Identity Plus Root CA\n")
 			fmt.Println("update-service:\nrenewes the server certificate for the service if necessary (reached 3/4 of its lifetime or the domain name has changed). The call must be made with a valid agent employed by the service.\n")
-			fmt.Println("list-agents:\nLists all devices you own)\n")
+			fmt.Println("list-agents:\nLists all devices you own\n")
+			fmt.Println("get-trust-chain:\nDownloads the Identity Plus authority chain needed to accept and authenticate with Identity Plus issued client certificates\n")			
 			fmt.Println("\n---\n\n")
 
 			return
@@ -224,7 +226,8 @@ func main() {
 				i = i + 1
 			}
 
-		} else if os.Args[i] == "enroll-user-device" {
+		/* 
+		else if os.Args[i] == "enroll-user-device" {
 			command = os.Args[i]
 
 			if len(os.Args) <= i+1 {
@@ -244,6 +247,7 @@ func main() {
 				i = i + 1
 			}
 
+		} */
 		} else if os.Args[i] == "enroll" {
 			command = os.Args[i]
 
@@ -279,8 +283,11 @@ func main() {
 		} else if os.Args[i] == "list-devices" {
 			command = os.Args[i]
 
+		} else if os.Args[i] == "get-trust-chain" {
+			command = os.Args[i]
+
 		} else {
-			url = os.Args[i]
+				url = os.Args[i]
 		}
 	}
 
@@ -318,19 +325,6 @@ func main() {
 		os.Remove(identity_dir + "/test.tmp")
 	}
 
-	if command == "enroll-user-device" {
-		var ans = ""
-
-		if authorization == "" {
-			ans = interactive_enroll_user_agent(device_name, identity_dir)
-		} else {
-			ans = enroll_unified(authorization, device_name, identity_dir)
-		}
-
-		fmt.Print(ans)
-		log.Println(ans)
-	}
-
 	if command == "enroll" {
 		var ans = ""
 
@@ -348,12 +342,6 @@ func main() {
 		ans := assist_enroll(managed_service, device_name, identity_dir)
 		fmt.Print(ans)
 		log.Println("Assisting " + managed_service + " with autoprovisioning...")
-	}
-
-	if command == "enroll-service-device" {
-		ans := enroll_unified(authorization, device_name, identity_dir)
-		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "renew" {
@@ -387,9 +375,38 @@ func main() {
 		log.Println(ans)
 	}
 
-	if command == "get url" {
+	if command == "get-url" {
 		ans := call(url, device_name, identity_dir)
 		fmt.Print(ans)
 		log.Println(ans)
 	}
+
+	if command == "get-trust-chain" {
+		ans := get_trust_chain(device_name, identity_dir)
+		fmt.Print(ans)
+		log.Println(ans)
+	}
+
+	/* deprecated
+	if command == "enroll-service-device" {
+		ans := enroll_unified(authorization, device_name, identity_dir)
+		fmt.Print(ans)
+		log.Println(ans)
+	}
+
+	// deprecated
+	if command == "enroll-user-device" {
+		var ans = ""
+
+		if authorization == "" {
+			ans = interactive_enroll_user_agent(device_name, identity_dir)
+		} else {
+			ans = enroll_unified(authorization, device_name, identity_dir)
+		}
+
+		fmt.Print(ans)
+		log.Println(ans)
+	}
+	*/
+
 }
