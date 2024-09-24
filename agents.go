@@ -355,6 +355,18 @@ func issue_service_identity(device_name string, identity_dir string, force bool)
 	return service_identity.Result.Outcome
 }
 
+func get_trust_chain(device_name string, identity_dir string) string {
+	err, ans := do_get("https://platform."+service+"/download/trust-chain?format=pem", "", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+
+	if err != "" {
+		return "unable to download trust chain: " + err
+	}
+
+	ioutil.WriteFile(identity_dir+"/service-id/identity-plus-root.cer", ans, 0644)
+	
+	return "trust chain saved: " + identity_dir+"/service-id/identity-plus-root.cer" 
+}
+
 func list_devices(device_name string, identity_dir string) string {
 	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"get_active_identities\", \"args\": {}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
