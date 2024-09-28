@@ -341,7 +341,7 @@ func main() {
 		log.Println(ans)
 	}
 
-	if command == "get-url" {
+	if command == "get" {
 		ans := call(url, device_name, identity_dir)
 		fmt.Print(ans)
 		log.Println(ans)
