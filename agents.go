@@ -376,7 +376,20 @@ func list_devices(device_name string, identity_dir string) string {
 	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"get_active_identities\", \"args\": {}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
 
 	if err != "" {
-		return "Faild issuing certificate: " + err
+		return "Faild to list active mTLS IDs for agent: " + err
+	}
+
+	// var agent_identity X509_Identity_Response
+	// json.Unmarshal(ans, &agent_identity)
+
+	return string(ans)
+}
+
+func list_service_roles(device_name string, identity_dir string) string {
+	err, ans := do_post("https://signon."+service+"/api/v1", "{\"operation\": \"get_service_roles\", \"args\": {}}", identity_dir+"/"+device_name+".cer", identity_dir+"/"+device_name+".key")
+
+	if err != "" {
+		return "Faild to get service roles: " + err
 	}
 
 	// var agent_identity X509_Identity_Response

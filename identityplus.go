@@ -235,6 +235,9 @@ func main() {
 		} else if os.Args[i] == "list-devices" {
 			command = os.Args[i]
 
+		} else if os.Args[i] == "list-service-roles" {
+			command = os.Args[i]
+
 		} else if os.Args[i] == "get-trust-chain" {
 			command = os.Args[i]
 
@@ -294,6 +297,7 @@ func main() {
 	if command == "enroll" {
 		var ans = ""
 
+		log.Println("attempting enrollement")
 		if authorization == "" {
 			ans = interactive_enroll_user_agent(device_name, identity_dir)
 		} else {
@@ -301,25 +305,24 @@ func main() {
 		}
 
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "assist-enroll" {
+		log.Println("Assisting " + managed_service + " with autoprovisioning...")
 		ans := assist_enroll(managed_service, device_name, identity_dir)
 		fmt.Print(ans)
-		log.Println("Assisting " + managed_service + " with autoprovisioning...")
 	}
 
 	if command == "renew" {
+		log.Println("renewing service identity...")
 		ans := renew(device_name, identity_dir, false)
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "issue-service-identity" {
+		log.Println("issuing service identity...")
 		ans := issue_service_identity(device_name, identity_dir, true)
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "update" {
@@ -330,27 +333,29 @@ func main() {
 
 	if command == "update-service" {
 		os.Mkdir(identity_dir+"/service", 0700)
+		log.Println("updating service identity...")
 		ans := issue_service_identity(device_name, identity_dir, false)
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "list-devices" {
 		ans := list_devices(device_name, identity_dir)
 		fmt.Print(ans)
-		log.Println(ans)
+	}
+
+	if command == "list-service-roles" {
+		ans := list_service_roles(device_name, identity_dir)
+		fmt.Print(ans)
 	}
 
 	if command == "get" {
 		ans := call(url, device_name, identity_dir)
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "get-trust-chain" {
 		ans := get_trust_chain(device_name, identity_dir)
 		fmt.Print(ans)
-		log.Println(ans)
 	}
 
 	if command == "help" {
@@ -375,6 +380,7 @@ func main() {
 		fmt.Println("issue-service-identity:\nGenerates a server certificate for your service, signed by the Idnetity Plus CA. The call must be made with a valid agent enrolled by the service. To work with Identity Plus issued server certificates we recommend explicitly trusting the Identity Plus Root CA\n")
 		fmt.Println("update-service:\nrenewes the server certificate for the service if necessary (reached 3/4 of its lifetime or the domain name has changed). The call must be made with a valid agent employed by the service.\n")
 		fmt.Println("list-agents:\nLists all devices you own\n")
+		fmt.Println("list-service-roles:\nLists all roles in all services you are assigned\n")
 		fmt.Println("get-trust-chain:\nDownloads the Identity Plus authority chain needed to accept and authenticate with Identity Plus issued client certificates\n")			
 		fmt.Println("get url:\nmakes an https get call using the mtls ID as client certificate authentication\n")			
 		fmt.Println("help:\nprints this message\n")			
